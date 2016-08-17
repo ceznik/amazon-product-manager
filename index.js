@@ -6,7 +6,9 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var path = require('path');
-var amazon = require('amazon-product-api');
+var AWS = require('aws-lib');
+var amazonKeyAccess = require('./app/connection/amazon.js');
+var Table = require('cli-table');
 
 //======================================
 //EXPRESS CONFIGURATION
@@ -22,25 +24,38 @@ app.listen(PORT, function(){
 });
 
 //=======================================
+//Command Line Interfact Table 
+//
+//=======================================
+//use for displaying query data to the console
+var table = new Table({
+	head: ['#', 'Product', 'ASIN'],
+	colWidths: [5, 45, 15]
+});
+
+
+
+//=======================================
 //AMAZON CLIENT
 //
 //=======================================
 
-var client = amazon.createClient({
-	awsId: "AKIAJIF67OFDJPEVJRFQ",
-	awsSecret: "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",
-	awsTag: "A1MAHQ3DXWNQOA",
-});
+var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.secretAccessKey,amazonKeyAccess.associateTag);
 
-client.itemSearch({
-	director: 'Quentin Tarantino',
-	actor: 'Samuel L. Jackson',
-	searchIndex: 'DVD',
-	audienceRating: 'R',
-	responseGroup: 'ItemAttributes,Offers,Images'
-}).then(function(results){
-	console.log(results);
-}).catch(function(err){
-	console.log(err.Error[0].Message);
-});
+var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider L1AD03311509","3D MAXpider M1TY0891309","3D MAXpider M1VW0211301"];
 
+
+var options = {};
+var asinResult = "";
+options = {SearchIndex: "Automotive", Keywords: "3D MAXpider"};
+aws.call("ItemSearch", options, function(err, result) {
+	if (err) throw err;
+	if (result.Items.TotalResults == '0'){
+		asinResult = "NO PRODUCT MATCH";
+	}
+	else {
+		asinResult = result.Items;
+	}
+	console.log("Total Results: ", result.Items.Item.length);
+	//console.log(result.Items);
+});
