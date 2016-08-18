@@ -9,14 +9,20 @@ var path = require('path');
 var AWS = require('aws-lib');
 var amazonKeyAccess = require('./app/connection/amazon.js');
 var Table = require('cli-table');
+//var csvParser = require('csv-parse');
+var fs = require('fs');
 
+// fs.readFile('data/3D MAXpider Amazon Format.txt', 'utf8', function(err, data){
+// 	if (err) throw err;
+// 	console.log(data);
+// });
 //======================================
 //EXPRESS CONFIGURATION
 //
 //======================================
 
 var app = express();
-var PORT = process.env.PORT||3031;
+var PORT = process.env.PORT||3030;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -67,16 +73,13 @@ function amazonSearch(searchTerm){
 
 app.get('/:name', function(req, res){
 	var term = req.params.name;
-	var options = {SearchIndex: "Automotive", Keywords: term};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds"};
 	var searchResults = [];
 	aws.call("ItemSearch",options, function(err, result){
-		for (var i = 0; i < result.Items.Item.length; i++){
-			searchResults.push([result.Items.Item[i].ASIN,result.Items.Item[i].DetailPageURL, result.Items.Item[i].ItemAttributes.Manufacturer,result.Items.Item[i].ItemAttributes.Title]);
-		}
-		res.send(searchResults);
+		res.send(result);
 	});
 });
 
 app.get('/', function(req, res){
-	res.send("searchResults");
+	res.sendFile('./public/index.html');
 });

@@ -7,15 +7,15 @@ var IndexRoute = Router.IndexRoute;
 
 //high level React Components
 var Main = require('../components/Main');
-var Search = require('../components/Search');
+var Query = require('../components/Query');
 var Results = require('../components/Results');
 
 
 module.exports = (
 	<Route path='/' component={Main}>
-		<Route path='Search' component={Search} />
-		<Route path='Resuls' component={Results} />
+		<Route path='Query' component={Query} />
+		<Route path='Results' component={Results} />
 
-		<IndexRoute component={Search} />
+		<IndexRoute component={Query} />
 	</Route>
 );

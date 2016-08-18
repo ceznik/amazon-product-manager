@@ -3,7 +3,7 @@ var ReactDOM = require('react-dom');
 
 var Router = require('react-router').Router;
 
-var routes = require('.config/routes');
+var routes = require('./config/routes');
 
 
 ReactDOM.render(
