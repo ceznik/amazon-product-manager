@@ -58,15 +58,16 @@ var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider 
 
 function amazonSearch(searchTerm){
 	var asinResult = "";
-	var options = {SearchIndex: "Automotive", Keywords: "3D MAXpider"};
+	var options = {SearchIndex: "Automotive", Keywords: searchTerm};
 	aws.call("ItemSearch", options, function(err, result) {
 		if (err) throw err;
-		if (result.Items.TotalResults == '0'){
-			asinResult = "NO PRODUCT MATCH";
-		}
-		else {
-			asinResult = result.Items;
-		}
+		// if (result.Items.TotalResults == '0'){
+		// 	asinResult = "NO PRODUCT MATCH";
+		// }
+		// else {
+		// 	asinResult = result.Items;
+		// }
+		console.log(result.Items);
 		return result;
 	});
 }
@@ -76,10 +77,23 @@ app.get('/:name', function(req, res){
 	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds"};
 	var searchResults = [];
 	aws.call("ItemSearch",options, function(err, result){
-		res.send(result);
+		// res.send(result.Items.TotalResults);
+		if (err) throw err;
+		if (result.Items.TotalResults == "0"){
+			res.send("No Results");
+		}
+		else if (result.Items.TotalResults == "1"){
+			res.send(result.Items.Item.ASIN);
+		}
+		else{
+			res.send(result.Items.Item[0].ASIN);
+		}
 	});
 });
 
 app.get('/', function(req, res){
-	res.sendFile('./public/index.html');
+	var term = "3D MAXpider 1781-A";
+	var amzSearch = amazonSearch(term);
+	console.log(amzSearch);
+	res.send(amzSearch);
 });
