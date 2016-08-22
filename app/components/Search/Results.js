@@ -33,4 +33,6 @@ var Results = React.createClass({
 			)
 	}
 
-})
+});
+
+module.exports = Results;

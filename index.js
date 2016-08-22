@@ -7,7 +7,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var path = require('path');
 var AWS = require('aws-lib');
-var amazonKeyAccess = require('./app/connection/amazon.js');
+//var amazonKeyAccess = require('./app/connection/amazon.js');
 var Table = require('cli-table');
 //var csvParser = require('csv-parse');
 var fs = require('fs');
@@ -52,24 +52,14 @@ var table = new Table({
 //
 //=======================================
 
-var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.secretAccessKey,amazonKeyAccess.associateTag);
+//var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.secretAccessKey,amazonKeyAccess.associateTag);
+var aws = AWS.createProdAdvClient("AKIAI5XYHJDZZBGPFWRA","UGpxEAKSiL+GR3MvoPPskQo259J4uyneHA6OZDHD","ultrarev-20");
 
 var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider L1AD03311509","3D MAXpider M1TY0891309","3D MAXpider M1VW0211301"];
 
 function amazonSearch(searchTerm){
 	var asinResult = "";
-	var options = {SearchIndex: "Automotive", Keywords: searchTerm};
-	aws.call("ItemSearch", options, function(err, result) {
-		if (err) throw err;
-		// if (result.Items.TotalResults == '0'){
-		// 	asinResult = "NO PRODUCT MATCH";
-		// }
-		// else {
-		// 	asinResult = result.Items;
-		// }
-		console.log(result.Items);
-		return result;
-	});
+	
 }
 
 app.get('/:name', function(req, res){
@@ -93,7 +83,17 @@ app.get('/:name', function(req, res){
 
 app.get('/', function(req, res){
 	var term = "3D MAXpider 1781-A";
-	var amzSearch = amazonSearch(term);
-	console.log(amzSearch);
-	res.send(amzSearch);
+	var options = {SearchIndex: "Automotive", Keywords: term};
+	aws.call("ItemSearch", options, function(err, result) {
+		if (err) throw err;
+		// if (result.Items.TotalResults == '0'){
+		// 	asinResult = "NO PRODUCT MATCH";
+		// }
+		// else {
+		// 	asinResult = result.Items;
+		// }
+		///console.log(result.Items);
+		///return result;
+	});
+	res.sendFile(path.join(__dirname + '/public/index.html'));
 });

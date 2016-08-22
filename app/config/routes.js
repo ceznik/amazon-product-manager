@@ -7,8 +7,8 @@ var IndexRoute = Router.IndexRoute;
 
 //high level React Components
 var Main = require('../components/Main');
-var Query = require('../components/Query');
-var Results = require('../components/Results');
+var Query = require('../components/Search/Query');
+var Results = require('../components/Search/Results');
 
 
 module.exports = (
