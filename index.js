@@ -62,7 +62,8 @@ function amazonSearch(searchTerm){
 	
 }
 
-app.get('/:name', function(req, res){
+
+app.get('/search/:name?', function(req, res){
 	var term = req.params.name;
 	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds"};
 	var searchResults = [];
@@ -81,19 +82,6 @@ app.get('/:name', function(req, res){
 	});
 });
 
-app.get('/', function(req, res){
-	var term = "3D MAXpider 1781-A";
-	var options = {SearchIndex: "Automotive", Keywords: term};
-	aws.call("ItemSearch", options, function(err, result) {
-		if (err) throw err;
-		// if (result.Items.TotalResults == '0'){
-		// 	asinResult = "NO PRODUCT MATCH";
-		// }
-		// else {
-		// 	asinResult = result.Items;
-		// }
-		///console.log(result.Items);
-		///return result;
-	});
+app.use('/', function(req, res){
 	res.sendFile(path.join(__dirname + '/public/index.html'));
 });
