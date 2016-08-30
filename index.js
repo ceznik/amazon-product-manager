@@ -7,7 +7,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var path = require('path');
 var AWS = require('aws-lib');
-//var amazonKeyAccess = require('./app/connection/amazon.js');
+var amazonKeyAccess = require('./app/connection/amazon.js');
 var Table = require('cli-table');
 //var csvParser = require('csv-parse');
 var fs = require('fs');
@@ -52,33 +52,55 @@ var table = new Table({
 //
 //=======================================
 
-//var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.secretAccessKey,amazonKeyAccess.associateTag);
-var aws = AWS.createProdAdvClient("AKIAI5XYHJDZZBGPFWRA","UGpxEAKSiL+GR3MvoPPskQo259J4uyneHA6OZDHD","ultrarev-20");
+var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.secretAccessKey,amazonKeyAccess.associateTag);
 
-var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider L1AD03311509","3D MAXpider M1TY0891309","3D MAXpider M1VW0211301"];
+//test data
+//var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider L1AD03311509","3D MAXpider M1TY0891309","3D MAXpider M1VW0211301"];
 
-function amazonSearch(searchTerm){
-	var asinResult = "";
+// function amazonSearch(searchTerm){
+// 	var asinResult = "";
 	
-}
+// }
 
 
-app.get('/search/:name?', function(req, res){
-	var term = req.params.name;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds"};
-	var searchResults = [];
+app.get('/search/:mfr/:partnum', function(req, res){
+	var term = req.params.mfr.toLowerCase() + "+" + req.params.partnum;
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
 	aws.call("ItemSearch",options, function(err, result){
 		// res.send(result.Items.TotalResults);
 		if (err) throw err;
-		if (result.Items.TotalResults == "0"){
+		console.log(term);
+		if (parseInt(result.Items.TotalResults) == 0){
 			res.send("No Results");
 		}
-		else if (result.Items.TotalResults == "1"){
+		else if (parseInt(result.Items.TotalResults) == 1){
 			res.send(result.Items.Item.ASIN);
 		}
-		else{
-			res.send(result.Items.Item[0].ASIN);
+		else if(parseInt(result.Items.TotalResults) >= 2){
+			var multiple = [];
+			for(var i = 0; i < result.Items.Item.length; i++){
+				console.log(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
+				if(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){				
+					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
+					asinResult = result.Items.Item[i].ASIN;
+				}
+			}
+			if(multiple !== null){
+				res.send(multiple[0].Asin);
+			}
 		}
+		else{
+			res.send("Unknown Error");
+		}
+	});
+});
+
+app.get('/response/:name', function(req, res){
+	var term = req.params.name;
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
+	aws.call("ItemSearch",options, function(err, result){
+		if (err) throw err;
+		res.send(result);
 	});
 });
 
