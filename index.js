@@ -65,11 +65,12 @@ var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.se
 
 app.get('/search/:mfr/:partnum', function(req, res){
 	var term = req.params.mfr.toLowerCase() + "+" + req.params.partnum;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes"};
 	aws.call("ItemSearch",options, function(err, result){
 		// res.send(result.Items.TotalResults);
 		if (err) throw err;
 		console.log(term);
+		//console.log(result);
 		if (parseInt(result.Items.TotalResults) == 0){
 			res.send("No Results");
 		}
@@ -79,14 +80,19 @@ app.get('/search/:mfr/:partnum', function(req, res){
 		else if(parseInt(result.Items.TotalResults) >= 2){
 			var multiple = [];
 			for(var i = 0; i < result.Items.Item.length; i++){
-				console.log(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
-				if(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){				
+				//console.log(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
+				//console.log(result.Items.Item[i].ItemAttributes.MPN);
+				if(result.Items.Item[i].ItemAttributes.Brand.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.Model == req.params.partnum){				
 					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
 					asinResult = result.Items.Item[i].ASIN;
 				}
 			}
-			if(multiple !== null){
+			console.log(multiple.length == 0);
+			if(multiple.length !== 0){
 				res.send(multiple[0].Asin);
+			}
+			else{
+				res.send("Product Not Found");
 			}
 		}
 		else{
