@@ -65,7 +65,7 @@ var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.se
 
 app.get('/search/:mfr/:partnum', function(req, res){
 	var term = req.params.mfr.toLowerCase() + "+" + req.params.partnum;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
 	aws.call("ItemSearch",options, function(err, result){
 		// res.send(result.Items.TotalResults);
 		if (err) throw err;
@@ -81,8 +81,13 @@ app.get('/search/:mfr/:partnum', function(req, res){
 			var multiple = [];
 			for(var i = 0; i < result.Items.Item.length; i++){
 				//console.log(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
+				//console.log(result.Items.Item[i].ItemAttributes.Brand.toLowerCase() );
 				//console.log(result.Items.Item[i].ItemAttributes.MPN);
 				if(result.Items.Item[i].ItemAttributes.Brand.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.Model == req.params.partnum){				
+					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Brand,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
+					asinResult = result.Items.Item[i].ASIN;
+				}
+				else if (result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.Model == req.params.partnum){
 					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
 					asinResult = result.Items.Item[i].ASIN;
 				}
@@ -106,10 +111,23 @@ app.get('/response/:name', function(req, res){
 	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
 	aws.call("ItemSearch",options, function(err, result){
 		if (err) throw err;
-		res.send(result);
+		productInfo.push({Brand: result.Items.ItemAttributes.Brand})
+		res.send(productInfo);
 	});
 });
+
+app.get('/asin/:id', function(req, res){
+	var asinId = req.params.id;
+	var options = {SearchIndex: "Automotive", Keywords: asinId, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
+	var productInfo = [];
+	aws.call("ItemSearch", options, function(err, result){
+		if (err) throw err;
+		productInfo.push({Brand: result.Items.Item.ItemAttributes.Brand, Manufacturer: result.Items.Item.ItemAttributes.Manufacturer, Model: result.Items.Item.ItemAttributes.Model, MPN: result.Items.Item.ItemAttributes.MPN});
+		res.send(productInfo);
+	});
+})
 
 app.use('/', function(req, res){
 	res.sendFile(path.join(__dirname + '/public/index.html'));
 });
+
