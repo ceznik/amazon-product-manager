@@ -66,7 +66,7 @@ var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.se
 
 app.get('/search/:mfr/:partnum', function(req, res){
 	var term = req.params.mfr.toLowerCase() + " " + req.params.partnum;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank" };
 	aws.call("ItemSearch",options, function(err, result){
 		// res.send(result.Items.TotalResults);
 		try{
@@ -127,7 +127,7 @@ app.get('/search/:mfr/:partnum', function(req, res){
 
 app.get('/response/:name', function(req, res){
 	var term = req.params.name;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank,Images"};
 	
 	aws.call("ItemSearch",options, function(err, result){
 		try{
@@ -255,7 +255,25 @@ app.get('/gencsv/:brand/:partnum', function(req, res) {
 	});
 });
 
+app.get('/images/:name', function(req, res){
+	var term = req.params.name;
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank,Images"};
+	var images = [];
+	aws.call("ItemSearch",options, function(err, result){
+		try{
+			if (err || result.Items.TotalResults == 0) throw result.Items.Request.Errors.Error.Message;
+			//console.log("manufacturer: " + result.Items.Item[0].ItemAttributes.Manufacturer.toLowerCase());
+		}
+		catch(err){
+			console.log(result.Items.Request.Errors.Error.Message);
+		}
+		
+		res.send(result);
+	});
+});
+
 app.use('/', function(req, res){
-	res.sendFile(path.join(__dirname + '/public/index.html'));
+	res.send(__dirname);
+	//res.sendFile(path.join(__dirname + '/public/index.html'));
 });
 

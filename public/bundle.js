@@ -27200,12 +27200,13 @@
 /* 240 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	var React = __webpack_require__(1);
+	var Router = __webpack_require__(175);
 
 	var Query = React.createClass({
-		displayName: "Query",
+		displayName: 'Query',
 
 		getInitialState: function getInitialState() {
 			return {
@@ -27229,44 +27230,44 @@
 
 		render: function render() {
 			return React.createElement(
-				"div",
-				{ className: "main-container" },
+				'div',
+				{ className: 'main-container' },
 				React.createElement(
-					"div",
-					{ className: "panel panel-default" },
+					'div',
+					{ className: 'panel panel-default' },
 					React.createElement(
-						"div",
-						{ className: "panel-heading" },
+						'div',
+						{ className: 'panel-heading' },
 						React.createElement(
-							"h3",
-							{ className: "panel-title text-center" },
-							"Query"
+							'h3',
+							{ className: 'panel-title text-left' },
+							'Query'
 						)
 					),
 					React.createElement(
-						"div",
-						{ className: "panel-body text-center" },
+						'div',
+						{ className: 'panel-body text-left' },
 						React.createElement(
-							"form",
+							'form',
 							null,
 							React.createElement(
-								"div",
-								{ className: "form-group" },
+								'div',
+								{ className: 'form-group' },
 								React.createElement(
-									"h4",
-									{ className: "" },
+									'h4',
+									{ className: '' },
 									React.createElement(
-										"strong",
+										'strong',
 										null,
-										"Location"
+										'Manufacturer'
 									)
 								),
-								React.createElement("input", { type: "text", className: "form-control text-center", id: "search", onChange: this.handleChange, required: true }),
-								React.createElement("br", null),
+								React.createElement('input', { type: 'text', className: 'form-control text-left', id: 'search', onChange: this.handleChange, required: true }),
+								React.createElement('br', null),
 								React.createElement(
-									"button",
-									{ type: "button", className: "btn btn-primary", onClick: this.handleClick },
-									"Submit"
+									'button',
+									{ type: 'button', className: 'btn btn-primary', onClick: this.handleClick },
+									'Submit'
 								)
 							)
 						)
