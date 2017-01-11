@@ -58,74 +58,202 @@ var aws = AWS.createProdAdvClient(amazonKeyAccess.accessKeyId,amazonKeyAccess.se
 //var productTerm = ["3D MAXpider 1781-A","3D MAXpider L1AC00001501","3D MAXpider L1AD03311509","3D MAXpider M1TY0891309","3D MAXpider M1VW0211301"];
 
 // function amazonSearch(searchTerm){
-// 	var asinResult = "";
+//var asinResult = "";
 	
 // }
 
 
+
 app.get('/search/:mfr/:partnum', function(req, res){
-	var term = req.params.mfr.toLowerCase() + "+" + req.params.partnum;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
+	var term = req.params.mfr.toLowerCase() + " " + req.params.partnum;
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank"};
 	aws.call("ItemSearch",options, function(err, result){
 		// res.send(result.Items.TotalResults);
-		if (err) throw err;
-		console.log(term);
-		//console.log(result);
-		if (parseInt(result.Items.TotalResults) == 0){
-			res.send("No Results");
-		}
-		else if (parseInt(result.Items.TotalResults) == 1){
-			res.send(result.Items.Item.ASIN);
-		}
-		else if(parseInt(result.Items.TotalResults) >= 2){
-			var multiple = [];
-			for(var i = 0; i < result.Items.Item.length; i++){
-				//console.log(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
-				//console.log(result.Items.Item[i].ItemAttributes.Brand.toLowerCase() );
-				//console.log(result.Items.Item[i].ItemAttributes.MPN);
-				if(result.Items.Item[i].ItemAttributes.Brand.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.Model == req.params.partnum){				
-					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Brand,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
-					asinResult = result.Items.Item[i].ASIN;
-				}
-				else if (result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase() && result.Items.Item[i].ItemAttributes.Model == req.params.partnum){
-					multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN, Upc:result.Items.Item[i].ItemAttributes.UPC});
-					asinResult = result.Items.Item[i].ASIN;
-				}
+		try{
+
+			console.log("----------------------");
+			console.log("SEARCH TERM: " + term);
+			//console.log(result);
+			if (parseInt(result.Items.TotalResults) == 0){
+				console.log("NO RESULTS");
+				res.send("No Results");
 			}
-			console.log(multiple.length == 0);
-			if(multiple.length !== 0){
-				res.send(multiple[0].Asin);
+			else if (parseInt(result.Items.TotalResults) == 1){
+				console.log("ASIN MATCH: " + result.Items.Item.ASIN);
+				res.send(result.Items.Item.ASIN);
+			}
+			else if(parseInt(result.Items.TotalResults) >= 2){
+				var multiple = [];
+				console.log(result.Items.Item.length + " MATCHES FOUND....");
+				for(var i = 0; i < result.Items.Item.length; i++){
+					console.log(req.params.mfr.toLowerCase().replace(/\+/g," "));
+					//console.log(req.params.partnum.replace(" ","-"));
+					console.log("Manufacturer: " + result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
+					console.log("Brand: " + result.Items.Item[i].ItemAttributes.Brand.toLowerCase() );
+					console.log("MPN: " + result.Items.Item[i].ItemAttributes.MPN);
+					console.log(result.Items.Item[i].ASIN);
+					//try{
+						//if()
+						if(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase().replace(/\+/g," ") && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){				
+						multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN});
+						//asinResult = result.Items.Item[i].ASIN;
+					//}
+
+					}
+					// else if (result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase().replace("+"," ") && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){
+					// 	multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN});
+					// 	//asinResult = result.Items.Item[i].ASIN;
+					// }
+				}
+				console.log(multiple);
+				if(multiple.length !== 0){
+					console.log("TOP RESULT: " + multiple[0].Asin);
+					res.send(multiple[0].Asin);
+				}
+				else{
+					res.send("Product Not Found");
+				}
 			}
 			else{
-				res.send("Product Not Found");
+				res.send("Unknown Error");
 			}
 		}
-		else{
-			res.send("Unknown Error");
+		catch(err){
+			console.log(err);
+			res.send("Some Error");
 		}
 	});
 });
 
 app.get('/response/:name', function(req, res){
 	var term = req.params.name;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank"};
+	
 	aws.call("ItemSearch",options, function(err, result){
-		if (err) throw err;
-		productInfo.push({Brand: result.Items.ItemAttributes.Brand})
-		res.send(productInfo);
+		try{
+			if (err || result.Items.TotalResults == 0) throw result.Items.Request.Errors.Error.Message;
+			//console.log("manufacturer: " + result.Items.Item[0].ItemAttributes.Manufacturer.toLowerCase());
+		}
+		catch(err){
+			console.log(result.Items.Request.Errors.Error.Message);
+		}
+		res.send(result);
 	});
 });
 
 app.get('/asin/:id', function(req, res){
 	var asinId = req.params.id;
 	var options = {SearchIndex: "Automotive", Keywords: asinId, ResponseGroup: "ItemIds,ItemAttributes,SalesRank", Sort:"salesrank"};
-	var productInfo = [];
+	var productInfo = '<!DOCTYPE html>' +
+					  '<html>' + 
+					  '<head>' +
+					  '</head>'+
+					  '<body>' +
+					  '<table>';
+	productInfo += '<tr>'+
+					'<th> Brand </th>' +
+					'<th> Manufacturer </th>' +
+					'<th> Model </th>' +
+					'<th> MPN </th>' +
+					'</tr>' +
+					'<tr>';
+	var Brand = "";
+	var Manufacturer = "";
+	var Model = "";
+	var MPN = "";
 	aws.call("ItemSearch", options, function(err, result){
-		if (err) throw err;
-		productInfo.push({Brand: result.Items.Item.ItemAttributes.Brand, Manufacturer: result.Items.Item.ItemAttributes.Manufacturer, Model: result.Items.Item.ItemAttributes.Model, MPN: result.Items.Item.ItemAttributes.MPN});
+		//if (err) throw err;
+		try{
+			if (result.Items.Item.ItemAttributes.Brand == undefined) throw "N/A";
+			Brand = result.Items.Item.ItemAttributes.Brand;
+		}
+		catch(err){
+			Brand = err;
+		}
+		try{
+			if (result.Items.Item.ItemAttributes.Manufacturer == undefined) throw "N/A";
+			Manufacturer = result.Items.Item.ItemAttributes.Manufacturer
+		}
+		catch(err){
+			Manufacturer = err;
+		}
+		try{
+			if (result.Items.Item.ItemAttributes.Model == undefined) throw "N/A";
+			Model = result.Items.Item.ItemAttributes.Model
+		}
+		catch(err){
+			Model = err;
+		}		
+		try{
+			if (result.Items.Item.ItemAttributes.MPN == undefined) throw "N/A";
+			MPN = result.Items.Item.ItemAttributes.MPN;
+		}
+		catch(err){
+			MPN = err;
+		}
+
+		productInfo += '<td>' + Brand + '</td>' +
+					   '<td>' + Manufacturer +'</td>' + 
+					   '<td>' + Model + '</td>' + 
+					   '<td>' + MPN + '</td>' +
+					   '</td>' +
+					   '</table>' + 
+					   '</body>' +
+					   '</html>';
 		res.send(productInfo);
 	});
-})
+});
+
+app.get('/gencsv/:brand/:partnum', function(req, res) {
+	var brand = req.params.brand.toLowerCase();
+	var partnum = req.params.partnum;
+	aws.call("ItemSearch",options, function(err, result){
+		try{
+
+			console.log("----------------------");
+			console.log("SEARCH TERM: " + term);
+			//console.log(result);
+			if (parseInt(result.Items.TotalResults) == 0){
+				console.log("NO RESULTS");
+				res.send("No Results");
+			}
+			else if (parseInt(result.Items.TotalResults) == 1){
+				console.log("ASIN MATCH: " + result.Items.Item.ASIN);
+				res.send(result.Items.Item.ASIN);
+			}
+			else if(parseInt(result.Items.TotalResults) >= 2){
+				var multiple = [];
+				console.log(result.Items.Item.length + " MATCHES FOUND....");
+				for(var i = 0; i < result.Items.Item.length; i++){
+					console.log(req.params.mfr.toLowerCase().replace(/\+/g," "));
+					//console.log(req.params.partnum.replace(" ","-"));
+					console.log("Manufacturer: " + result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase());
+					console.log("Brand: " + result.Items.Item[i].ItemAttributes.Brand.toLowerCase() );
+					console.log("MPN: " + result.Items.Item[i].ItemAttributes.MPN);
+					console.log(result.Items.Item[i].ASIN);
+						if(result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase().replace(/\+/g," ") && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){				
+						multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN});
+						}
+				}
+				console.log(multiple);
+				if(multiple.length !== 0){
+					console.log("TOP RESULT: " + multiple[0].Asin);
+					res.send(multiple[0].Asin);
+				}
+				else{
+					res.send("Product Not Found");
+				}
+			}
+			else{
+				res.send("Unknown Error");
+			}
+		}
+		catch(err){
+			console.log(err);
+			res.send("Some error");
+		}
+	});
+});
 
 app.use('/', function(req, res){
 	res.sendFile(path.join(__dirname + '/public/index.html'));
