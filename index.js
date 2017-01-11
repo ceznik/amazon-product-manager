@@ -257,23 +257,81 @@ app.get('/gencsv/:brand/:partnum', function(req, res) {
 
 app.get('/images/:name', function(req, res){
 	var term = req.params.name;
-	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank,Images"};
+	var options = {SearchIndex: "Automotive", Keywords: term, ResponseGroup: "ItemIds,ItemAttributes,SalesRank,Images", Sort:"salesrank"};
 	var images = [];
 	aws.call("ItemSearch",options, function(err, result){
+		// res.send(result.Items.TotalResults);
 		try{
-			if (err || result.Items.TotalResults == 0) throw result.Items.Request.Errors.Error.Message;
-			//console.log("manufacturer: " + result.Items.Item[0].ItemAttributes.Manufacturer.toLowerCase());
+
+			console.log("----------------------");
+			console.log("SEARCH TERM: " + term);
+			//console.log(result);
+			if (parseInt(result.Items.TotalResults) == 0){
+				console.log("NO RESULTS");
+				res.send("No Results");
+			}
+			else if (parseInt(result.Items.TotalResults) == 1){
+				console.log("EXACT MATCHES: " + result.Items.TotalResults);
+				for (i = 0; i < result.Items.Item.ImageSets.ImageSet.length; i++){
+					images.push(result.Items.Item.ImageSets.ImageSet[i].LargeImage.URL);
+
+				}
+				res.send(images.join("|"));
+			}
+			else if(parseInt(result.Items.TotalResults) >= 2){
+				var multiple = [];
+				for(var i = 0; i < result.Items.Item.length; i++){
+					if(result.Items.Item[i].SaleRank != undefined){
+						multiple.push({Rank:result.Items.Item[i].SalesRank,Mpn:result.Items.Item[i].ItemAttributes.MPN, Images:result.Items.Item[i].ImageSets.ImageSet});
+					}
+
+
+					// else if (result.Items.Item[i].ItemAttributes.Manufacturer.toLowerCase() == req.params.mfr.toLowerCase().replace("+"," ") && result.Items.Item[i].ItemAttributes.MPN == req.params.partnum){
+					// 	multiple.push({Mfr:result.Items.Item[i].ItemAttributes.Manufacturer,Mpn:result.Items.Item[i].ItemAttributes.MPN, Asin:result.Items.Item[i].ASIN});
+					// 	//asinResult = result.Items.Item[i].ASIN;
+					// }
+				}
+				console.log(multiple);
+				if(multiple.length !== 0){
+					//res.send(multiple);
+					for(i = 0; i < multiple[0].Images.length; i++){
+						images.push(multiple[0].Images[i].LargeImage.URL);
+					}
+					res.send(images.join("|"));
+				}
+				else{
+					res.send("Product Not Found");
+				}
+			}
+			else{
+				res.send("Unknown Error");
+			}
 		}
 		catch(err){
-			console.log(result.Items.Request.Errors.Error.Message);
+			console.log(err);
+			res.send("Some Error");
 		}
-		
-		res.send(result);
 	});
 });
 
 app.use('/', function(req, res){
-	res.send(__dirname);
-	//res.sendFile(path.join(__dirname + '/public/index.html'));
+	//res.send(__dirname);
+	var options = {
+		root: __dirname + '/public/',
+		dotfiles:'deny',
+	    headers: {
+	        'x-timestamp': Date.now(),
+	        'x-sent': true
+	    }
+	};
+	res.sendFile('index.html', options, function(err){
+		if(err){
+			console.log(err);
+			res.status(err.status).end();
+		}
+		else{
+			console.log('Sent file');
+		}
+	});
 });
 
